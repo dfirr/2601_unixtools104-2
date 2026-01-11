@@ -64,7 +64,7 @@ revealjs-plugins:
 ## TCP/IPは層構造になっている
 - 上位層のヘッダーは下位層のデータ。
 
-![出典: [The TCP/IP Guide: IP Datagram Encapsulation](http://www.tcpipguide.com/free/t_IPDatagramEncapsulation.htm) ](images//ipencap.png){fig-align="center"}
+![出典: [The TCP/IP Guide: IP Datagram Encapsulation](http://www.tcpipguide.com/free/t_IPDatagramEncapsulation.htm) ](./ipencap.png){fig-align="center"}
 
 
 ## TCPとUDP
