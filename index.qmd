@@ -1,0 +1,242 @@
+---
+title: Unix Tools 104 -- \#2 tcpdump, netcat
+subtitle: 阿部寛のホームページで学ぶ<br>インターネット関連プロトコルとツールの初歩
+author: Shintaro Watanabe
+date: 2026-01-16
+lang: ja
+format:
+  clean-revealjs:
+    slide-number: c/t 
+#    embed-resources: true
+    css: styles.css
+revealjs-plugins:
+  - quarto-revealjs-budoux
+---
+
+## はじめに
+- インターネット関連プロトコルを理解する重要性が高まっている。
+  - 仮想化の普及で、インフラ屋だけでなくアプリ屋にも。
+
+![出典: [MDN Web Docs – HTTP Layers](https://developer.mozilla.org/ja/docs/Web/HTTP/Guides/Overview/http-layers.svg), CC-BY-SA 2.5](https://developer.mozilla.org/ja/docs/Web/HTTP/Guides/Overview/http-layers.svg){fig-align="center"}
+
+## この授業の目的
+- プロトコルを文書だけで理解するのは退屈。
+- Excelの手順書だけを頼りにツールを使うのは危うい。
+    - 「新しい」Unixツールの実践を通じ、プロトコルを理解する。
+
+![](venn.svg){fig-align="center"}
+
+## 日程と時間帯
+- 全4回で、計8つのツールを学習する。日程は次の通り。
+
+| 日付 | 時間 |ツール | 学習事項 |
+|------|------|-------|----------|
+| 2025-10-10 | 18:00 - 19:00 | curl, jq | HTTPとJSON |
+| 2026-01-16 | 18:00 - 19:00 | tcpdump, netcat | TCP/IP |
+| 2026-xx-xx | 18:00 - 19:00 | nmap, hping | パケット操作 |
+| 2026-xx-xx | 18:00 - 19:00 | openssl, mitmproxy | TLSと認証機構 | 
+
+- 前半30分間を授業、後半30分間を演習とする。
+- 自習可能な[演習教材](https://dfirr.github.io/2509_unixtools104ex/)を準備した。
+
+## 注意事項
+- 何事も、たった1時間で上達することは不可能。
+- 授業と演習とを自己研鑽のキッカケにしてください。
+
+> 聞かざるは之に聞くに若かず、之を聞くは之を見るに若かず、<br>
+> 之を見るは之を知るに若かず、之を知るは之を行うに若かず。<br>
+> 學は之を行うに至りて止む。
+
+— 『荀子』儒效篇第八
+
+# TCP/IPスタック
+## なぜTCP/IPを理解する必要があるのか？
+- アプリ開発でも、ネットワークが原因となる障害は珍しくない。
+- 企業ネットワークは家庭と違い、複数のアクセス制御を設けている。
+  - 問題切り分けや制限迂回には、プロトコルの知識が役立つ。
+
+### 障害切り分けの例
+- サイトは動作しているのに応答がない。何が起きている？
+  - RSTパケットが返ってくる？　SYNへの応答がない？（TCP）
+  - ICMP Destination Unreachableが返ってくる？　typeとcodeは？
+  - ICMP Time Exceededが返ってくる？
+
+## TCP/IPは層構造になっている
+- 上位層のヘッダーは下位層のデータ。
+
+![出典: [The TCP/IP Guide: IP Datagram Encapsulation](http://www.tcpipguide.com/free/t_IPDatagramEncapsulation.htm) ](http://www.tcpipguide.com/free/diagrams/ipencap.png){fig-align="center"}
+
+
+## TCPとUDP
+- IP上の代表的な通信方式に、TCPとUDPとがある。
+  - TCPはコネクションを張り、再送機能を備える。
+
+![出典: [Cloudflare: What is UDP?](https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/)](https://www.cloudflare.com/img/learning/ddos/glossary/user-datagram-protocol-udp/tcp-vs-udp.svg){fig-align="center"}
+
+# tcpdump
+## パケットの取得・閲覧
+- ネットワークの問題分析にはパケットが必要。
+- `tcpdump`は、Unixで代表的なパケット取得のコマンドラインツール。
+  - Wireshark（tshark）よりも巨大ファイル（GB級）に強い。
+  - **Windowsの管理者権限がなくても**WSL上でパケットが取れる。
+- フィルター機能を備え、関心のあるパケットだけを抽出できる。
+- 取得だけでなく、表示にも利用できる。
+
+### インストール方法
+```bash {code-line-numbers="false"}
+$ sudo apt intall -y tcpdump
+```
+
+## 阿部寛のホームページを閲覧したときのパケット
+- `sudo tcpdump -i eth0 -n -t 'host 222.158.205.72 and port 80'`
+
+``` bash {code-line-numbers="false"}
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [S], seq 1169395136, win 65280, options [mss 1360,sackOK,TS val 2169204502 ecr 0,nop,wscale 7], length 0
+IP 222.158.205.72.80 > 172.17.144.43.35812: Flags [S.], seq 1688018954, ack 1169395137, win 13480, options [mss 1348,nop,wscale 0,sackOK,TS val 2715342741 ecr 2169204502], length 0
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [.], ack 1, win 510, options [nop,nop,TS val 2169204520 ecr 2715342741], length 0
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [P.], seq 1:87, ack 1, win 510, options [nop,nop,TS val 2169204520 ecr 2715342741], length 86: HTTP: GET / HTTP/1.1
+IP 222.158.205.72.80 > 172.17.144.43.35812: Flags [.], ack 87, win 13566, options [nop,nop,TS val 2715342762 ecr 2169204520], length 0
+IP 222.158.205.72.80 > 172.17.144.43.35812: Flags [P.], seq 1:776, ack 87, win 13566, options [nop,nop,TS val 2715342767 ecr 2169204520], length 775: HTTP: HTTP/1.1 200 OK
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [.], ack 776, win 510, options [nop,nop,TS val 2169204548 ecr 2715342767], length 0
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [F.], seq 87, ack 776, win 510, options [nop,nop,TS val 2169204548 ecr 2715342767], length 0
+IP 222.158.205.72.80 > 172.17.144.43.35812: Flags [.], ack 88, win 13566, options [nop,nop,TS val 2715342786 ecr 2169204548], length 0
+IP 222.158.205.72.80 > 172.17.144.43.35812: Flags [F.], seq 776, ack 88, win 13566, options [nop,nop,TS val 2715342787 ecr 2169204548], length 0
+IP 172.17.144.43.35812 > 222.158.205.72.80: Flags [.], ack 777, win 510, options [nop,nop,TS val 2169205565 ecr 2715343787], length 0
+```
+
+## tcpdumpの定番オプション（1/2）
+### パケットを取得する
+- パケット取得には`root`権限（`sudo`）が必要。
+
+| 説明               | コマンド例                          |
+|------------------|--------------------------------|
+| 利用可能な NIC を一覧表示  | `tcpdump -D`                   |
+| NIC を指定してパケット取得  | `tcpdump -i eth0`（`any` ですべて）  |
+| 最初の100パケットを取得    | `tcpdump -c 100`               |
+| 取得したパケットをファイルに保存 | `tcpdump -w sample.pcap`       |
+| 10MBごとにファイル分割    | `tcpdump -C 10 -w sample.pcap` |
+
+
+## tcpdumpの定番オプション（2/2）
+### パケットを表示する
+- `-r`がなければ「取りながら画面表示」になる。
+- `-tttt`は時間帯が環境依存。`TZ=UTC`を前につけるなどする。
+
+| 説明             | コマンド例                            |
+|----------------|----------------------------------|
+| ファイルから読み込み     | `tcpdump -r sample.pcap`         |
+| 名前解決（逆引き）しない   | `tcpdump -n`（**常につける**べし）        |
+| 詳細に出力          | `tcpdump -v`（`-vv`, `-vvv`）      |
+| ASCII/HEX表示を追加 | `tcpdump -X`                     |
+| 日時を非表示         | `tcpdump -t`（`-ttt`: 経過表示、`-tttt`: 人間可読表示） |
+
+
+## パケットフィルター（1/2）
+### 対象を指定する
+
+| キーワード       | 意味        | 例                       |
+|-------------|-----------|-------------------------|
+| `host`      | 特定のIPアドレス | `host 8.8.8.8`          |
+| `net`       | ネットワーク    | `net 192.168.1.0/24`    |
+| `src`       | 送信元       | `src host 10.0.0.1`     |
+| `dst`       | 宛先        | `dst net 172.16.0.0/16` |
+| `port`      | 単一ポート     | `port 80`               |
+| `portrange` | ポート範囲     | `portrange 1-1023`      |
+| `tcp`       | TCPパケット   | `tcp`                   |
+| `udp`       | UDPパケット   | `udp`                   |
+| `icmp`      | ICMPパケット  | `icmp`                  |
+
+## パケットフィルター（2/2）
+### 論理演算子
+
+| 演算子   | 意味   | 例                                         |
+|-------|------|-------------------------------------------|
+| `and` | 論理積  | `tcp and port 80`                         |
+| `or`  | 論理和  | `port 80 or port 443`                     |
+| `not` | 否定   | `not arp`                                 |
+| `()`  | 優先順位 | `(tcp and port 80) or (tcp and port 443)` |
+
+### 実践例
+| 目的 | フィルタ |
+|------|----------|
+| Web系 | `port 80 or port 443` |
+| DNS | `udp port 53` |
+
+
+# netcat
+## TCP/IPを「素手で」触る
+- netcat（`nc`）は、ソケットにバイト列を流すだけのツール。
+
+### クライアントモード
+- 阿部寛のホームページにTCP/IP接続する
+
+``` bash {code-line-numbers="false"}
+$ nc -4 -v -w 3 abehiroshi.la.coocan.jp 80
+Connection to abehiroshi.la.coocan.jp (222.158.205.72) 80 port [tcp/http] succeeded!
+```
+
+- `-4`: IPv4で接続、`-v`: 詳細表示、`-w 3`: 3秒待って終了
+
+``` bash {code-line-numbers="false"}
+ 00:00:00.000000 IP 192.168.1.242.45498 > 222.158.205.72.80: Flags [S], seq 2828344781, win 64440, options [mss 1432,sackOK,TS val 3638768202 ecr 0,nop,wscale 7], length 0
+ 00:00:00.011334 IP 222.158.205.72.80 > 192.168.1.242.45498: Flags [S.], seq 1683522370, ack 2828344782, win 14120, options [mss 1412,nop,wscale 0,sackOK,TS val 2903128759 ecr 3638768202], length 0
+ 00:00:00.000135 IP 192.168.1.242.45498 > 222.158.205.72.80: Flags [.], ack 1, win 504, options [nop,nop,TS val 3638768213 ecr 2903128759], length 0
+ 00:00:03.003525 IP 192.168.1.242.45498 > 222.158.205.72.80: Flags [F.], seq 1, ack 1, win 504, options [nop,nop,TS val 3638771217 ecr 2903128759], length 0
+ 00:00:00.011268 IP 222.158.205.72.80 > 192.168.1.242.45498: Flags [.], ack 2, win 14120, options [nop,nop,TS val 2903131774 ecr 3638771217], length 0
+ 00:00:00.000001 IP 222.158.205.72.80 > 192.168.1.242.45498: Flags [F.], seq 1, ack 2, win 14120, options [nop,nop,TS val 2903131774 ecr 3638771217], length 0
+```
+
+## HTTPリクエストを自分で作る
+- `nc`はTCP/IP接続して、バイト列を流せる状態にするだけ。
+  - アプリのプロトコルは自分で書いてやる必要がある。
+
+``` bash {code-line-numbers="false"}
+$ nc -4 abehiroshi.la.coocan.jp 80
+GET / HTTP/1.1
+Host: abehiroshi.la.coocan.jp
+
+```
+
+``` bash {code-line-numbers="false"}
+HTTP/1.1 200 OK
+Date: Sun, 11 Jan 2026 12:51:26 GMT
+Content-Type: text/html
+...以下略...
+```
+
+- `Ctrl+C`で`nc`を終了できる。
+
+``` bash {code-line-numbers="false"}
+printf "GET / HTTP/1.1\r\nHost: abehiroshi.la.coocan.jp\r\n\r\n" | nc -4 abehiroshi.la.coocan.jp 80
+```
+
+## netcatでポートスキャンする
+- `nc`の`-z`オプションを利用すると、簡易的なポートスキャンができる。
+  - ICMPが廃棄される企業ネットワークでも利用可能。
+  - nmapと異なり、デフォルトでインストールされている。
+
+``` bash {code-line-numbers="false"}
+$ nc -4 -v -z -w 1 abehiroshi.la.coocan.jp 80
+Connection to abehiroshi.la.coocan.jp (222.158.205.72) 80 port [tcp/http] succeeded!
+```
+
+- 192.168.0.1から.254までを80番でポートスキャン
+
+``` bash {code-line-numbers="false"}
+$ seq 1 254 | xargs -I{} nc -4 -v -z -w 1 192.168.0.{} 80
+```
+
+## netcatを簡易サーバーとして使う
+- `nc`の`-l`（Listen）オプションで、サーバーとして動作する。
+  - `-p 12345`のように待ち受けポートを指定（`1024`以下は要root）。
+- 疎通確認準備をサーバー側で行うときに使える。
+- データ転送にも使える。
+
+### なんでもOKを返すウェブサーバー {#add-margintop}
+- `curl http://localhost:8080/`に応答する。
+``` bash {code-line-numbers="false"}
+while true; do
+  printf 'HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 3\r\nConnection: close\r\n\r\nOK\n' \
+  | nc -l -p 8080
+done
+```
