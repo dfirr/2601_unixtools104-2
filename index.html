@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/tabby.min.js"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.7.32">
+
+  <meta name="author" content="Shintaro Watanabe">
+  <title>Unix Tools 104 – #2 tcpdump, netcat</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="index_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="index_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="index_files/libs/revealjs/dist/theme/quarto-887ef72658bdba9655801051c4aa8a0a.css">
+  <link rel="stylesheet" href="styles.css">
+  <link href="index_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="index_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="index_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="index_files/libs/revealjs/plugin/reveal-quarto-revealjs-budoux/quarto-revealjs-budoux.css" rel="stylesheet">
+  <link href="index_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+<script src="_extensions/clean/mathjax-config.js"></script>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Unix Tools 104 – #2 tcpdump, netcat</h1>
+  <p class="subtitle">阿部寛のホームページで学ぶ<br>インターネット関連プロトコルとツールの初歩</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Shintaro Watanabe 
+</div>
+</div>
+</div>
+
+  <p class="date">2026年1月16日</p>
+</section>
+<section id="はじめに" class="slide level2">
+<h2>はじめに</h2>
+<ul>
+<li>インターネット関連プロトコルを理解する重要性が高まっている。
+<ul>
+<li>仮想化の普及で、インフラ屋だけでなくアプリ屋にも。</li>
+</ul></li>
+</ul>
+
+<img data-src="https://developer.mozilla.org/ja/docs/Web/HTTP/Guides/Overview/http-layers.svg" class="r-stretch quarto-figure-center"><p class="caption">出典: <a href="https://developer.mozilla.org/ja/docs/Web/HTTP/Guides/Overview/http-layers.svg">MDN Web Docs – HTTP Layers</a>, CC-BY-SA 2.5</p></section>
+<section id="この授業の目的" class="slide level2">
+<h2>この授業の目的</h2>
+<ul>
+<li>プロトコルを文書だけで理解するのは退屈。</li>
+<li>Excelの手順書だけを頼りにツールを使うのは危うい。
+<ul>
+<li>「新しい」Unixツールの実践を通じ、プロトコルを理解する。</li>
+</ul></li>
+</ul>
+
+<img data-src="venn.svg" class="quarto-figure quarto-figure-center r-stretch"></section>
+<section id="日程と時間帯" class="slide level2">
+<h2>日程と時間帯</h2>
+<ul>
+<li>全4回で、計8つのツールを学習する。日程は次の通り。</li>
+</ul>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>日付</th>
+<th>時間</th>
+<th>ツール</th>
+<th>学習事項</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2025-10-10</td>
+<td>18:00 - 19:00</td>
+<td>curl, jq</td>
+<td>HTTPとJSON</td>
+</tr>
+<tr class="even">
+<td>2026-01-16</td>
+<td>18:00 - 19:00</td>
+<td>tcpdump, netcat</td>
+<td>TCP/IP</td>
+</tr>
+<tr class="odd">
+<td>2026-xx-xx</td>
+<td>18:00 - 19:00</td>
+<td>nmap, hping</td>
+<td>パケット操作</td>
+</tr>
+<tr class="even">
+<td>2026-xx-xx</td>
+<td>18:00 - 19:00</td>
+<td>openssl, mitmproxy</td>
+<td>TLSと認証機構</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>前半30分間を授業、後半30分間を演習とする。</li>
+<li>自習可能な<a href="https://dfirr.github.io/2509_unixtools104ex/">演習教材</a>を準備した。</li>
+</ul>
+</section>
+<section id="注意事項" class="slide level2">
+<h2>注意事項</h2>
+<ul>
+<li>何事も、たった1時間で上達することは不可能。</li>
+<li>授業と演習とを自己研鑽のキッカケにしてください。</li>
+</ul>
+<blockquote>
+<p>聞かざるは之に聞くに若かず、之を聞くは之を見るに若かず、<br> 之を見るは之を知るに若かず、之を知るは之を行うに若かず。<br> 學は之を行うに至りて止む。</p>
+</blockquote>
+<p>— 『荀子』儒效篇第八</p>
+</section>
+<section>
+<section id="tcpipスタック" class="title-slide slide level1 center">
+<h1>TCP/IPスタック</h1>
+
+</section>
+<section id="なぜtcpipを理解する必要があるのか" class="slide level2">
+<h2>なぜTCP/IPを理解する必要があるのか？</h2>
+<ul>
+<li>アプリ開発でも、ネットワークが原因となる障害は珍しくない。</li>
+<li>企業ネットワークは家庭と違い、複数のアクセス制御を設けている。
+<ul>
+<li>問題切り分けや制限迂回には、プロトコルの知識が役立つ。</li>
+</ul></li>
+</ul>
+<h3 id="障害切り分けの例">障害切り分けの例</h3>
+<ul>
+<li>サイトは動作しているのに応答がない。何が起きている？
+<ul>
+<li>RSTパケットが返ってくる？　SYNへの応答がない？（TCP）</li>
+<li>ICMP Destination Unreachableが返ってくる？　typeとcodeは？</li>
+<li>ICMP Time Exceededが返ってくる？</li>
+</ul></li>
+</ul>
+</section>
+<section id="tcpipは層構造になっている" class="slide level2">
+<h2>TCP/IPは層構造になっている</h2>
+<ul>
+<li>上位層のヘッダーは下位層のデータ。</li>
+</ul>
+
+<img data-src="http://www.tcpipguide.com/free/diagrams/ipencap.png" class="r-stretch quarto-figure-center"><p class="caption">出典: <a href="http://www.tcpipguide.com/free/t_IPDatagramEncapsulation.htm">The TCP/IP Guide: IP Datagram Encapsulation</a></p></section>
+<section id="tcpとudp" class="slide level2">
+<h2>TCPとUDP</h2>
+<ul>
+<li>IP上の代表的な通信方式に、TCPとUDPとがある。
+<ul>
+<li>TCPはコネクションを張り、再送機能を備える。</li>
+</ul></li>
+</ul>
+
+<img data-src="https://www.cloudflare.com/img/learning/ddos/glossary/user-datagram-protocol-udp/tcp-vs-udp.svg" class="r-stretch quarto-figure-center"><p class="caption">出典: <a href="https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/">Cloudflare: What is UDP?</a></p></section></section>
+<section>
+<section id="tcpdump" class="title-slide slide level1 center">
+<h1>tcpdump</h1>
+
+</section>
+<section id="パケットの取得閲覧" class="slide level2">
+<h2>パケットの取得・閲覧</h2>
+<ul>
+<li>ネットワークの問題分析にはパケットが必要。</li>
+<li><code>tcpdump</code>は、Unixで代表的なパケット取得のコマンドラインツール。
+<ul>
+<li>Wireshark（tshark）よりも巨大ファイル（GB級）に強い。</li>
+<li><strong>Windowsの管理者権限がなくても</strong>WSL上でパケットが取れる。</li>
+</ul></li>
+<li>フィルター機能を備え、関心のあるパケットだけを抽出できる。</li>
+<li>取得だけでなく、表示にも利用できる。</li>
+</ul>
+<h3 id="インストール方法">インストール方法</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo apt intall <span class="at">-y</span> tcpdump</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="阿部寛のホームページを閲覧したときのパケット" class="slide level2">
+<h2>阿部寛のホームページを閲覧したときのパケット</h2>
+<ul>
+<li><code>sudo tcpdump -i eth0 -n -t 'host 222.158.205.72 and port 80'</code></li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">S</span><span class="pp">]</span>, seq 1169395136, win 65280, options [mss 1360,sackOK,TS val 2169204502 ecr 0,nop,wscale 7], length 0</span>
+<span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 222.158.205.72.80 <span class="op">&gt;</span> 172.17.144.43.35812: Flags <span class="pp">[</span><span class="ss">S.</span><span class="pp">]</span>, seq 1688018954, ack 1169395137, win 13480, options [mss 1348,nop,wscale 0,sackOK,TS val 2715342741 ecr 2169204502], length 0</span>
+<span id="cb2-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 1, win 510, options [nop,nop,TS val 2169204520 ecr 2715342741], length 0</span>
+<span id="cb2-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">P.</span><span class="pp">]</span>, seq 1:87, ack 1, win 510, options [nop,nop,TS val 2169204520 ecr 2715342741], length 86: HTTP: GET / HTTP/1.1</span>
+<span id="cb2-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 222.158.205.72.80 <span class="op">&gt;</span> 172.17.144.43.35812: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 87, win 13566, options [nop,nop,TS val 2715342762 ecr 2169204520], length 0</span>
+<span id="cb2-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 222.158.205.72.80 <span class="op">&gt;</span> 172.17.144.43.35812: Flags <span class="pp">[</span><span class="ss">P.</span><span class="pp">]</span>, seq 1:776, ack 87, win 13566, options [nop,nop,TS val 2715342767 ecr 2169204520], length 775: HTTP: HTTP/1.1 200 OK</span>
+<span id="cb2-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 776, win 510, options [nop,nop,TS val 2169204548 ecr 2715342767], length 0</span>
+<span id="cb2-8"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">F.</span><span class="pp">]</span>, seq 87, ack 776, win 510, options [nop,nop,TS val 2169204548 ecr 2715342767], length 0</span>
+<span id="cb2-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 222.158.205.72.80 <span class="op">&gt;</span> 172.17.144.43.35812: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 88, win 13566, options [nop,nop,TS val 2715342786 ecr 2169204548], length 0</span>
+<span id="cb2-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 222.158.205.72.80 <span class="op">&gt;</span> 172.17.144.43.35812: Flags <span class="pp">[</span><span class="ss">F.</span><span class="pp">]</span>, seq 776, ack 88, win 13566, options [nop,nop,TS val 2715342787 ecr 2169204548], length 0</span>
+<span id="cb2-11"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">IP</span> 172.17.144.43.35812 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 777, win 510, options [nop,nop,TS val 2169205565 ecr 2715343787], length 0</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="tcpdumpの定番オプション12" class="slide level2">
+<h2>tcpdumpの定番オプション（1/2）</h2>
+<h3 id="パケットを取得する">パケットを取得する</h3>
+<ul>
+<li>パケット取得には<code>root</code>権限（<code>sudo</code>）が必要。</li>
+</ul>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>説明</th>
+<th>コマンド例</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>利用可能な NIC を一覧表示</td>
+<td><code>tcpdump -D</code></td>
+</tr>
+<tr class="even">
+<td>NIC を指定してパケット取得</td>
+<td><code>tcpdump -i eth0</code>（<code>any</code> ですべて）</td>
+</tr>
+<tr class="odd">
+<td>最初の100パケットを取得</td>
+<td><code>tcpdump -c 100</code></td>
+</tr>
+<tr class="even">
+<td>取得したパケットをファイルに保存</td>
+<td><code>tcpdump -w sample.pcap</code></td>
+</tr>
+<tr class="odd">
+<td>10MBごとにファイル分割</td>
+<td><code>tcpdump -C 10 -w sample.pcap</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tcpdumpの定番オプション22" class="slide level2">
+<h2>tcpdumpの定番オプション（2/2）</h2>
+<h3 id="パケットを表示する">パケットを表示する</h3>
+<ul>
+<li><code>-r</code>がなければ「取りながら画面表示」になる。</li>
+<li><code>-tttt</code>は時間帯が環境依存。<code>TZ=UTC</code>を前につけるなどする。</li>
+</ul>
+<table class="caption-top">
+<colgroup>
+<col style="width: 32%">
+<col style="width: 68%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>説明</th>
+<th>コマンド例</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ファイルから読み込み</td>
+<td><code>tcpdump -r sample.pcap</code></td>
+</tr>
+<tr class="even">
+<td>名前解決（逆引き）しない</td>
+<td><code>tcpdump -n</code>（<strong>常につける</strong>べし）</td>
+</tr>
+<tr class="odd">
+<td>詳細に出力</td>
+<td><code>tcpdump -v</code>（<code>-vv</code>, <code>-vvv</code>）</td>
+</tr>
+<tr class="even">
+<td>ASCII/HEX表示を追加</td>
+<td><code>tcpdump -X</code></td>
+</tr>
+<tr class="odd">
+<td>日時を非表示</td>
+<td><code>tcpdump -t</code>（<code>-ttt</code>: 経過表示、<code>-tttt</code>: 人間可読表示）</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="パケットフィルター12" class="slide level2">
+<h2>パケットフィルター（1/2）</h2>
+<h3 id="対象を指定する">対象を指定する</h3>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>キーワード</th>
+<th>意味</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>host</code></td>
+<td>特定のIPアドレス</td>
+<td><code>host 8.8.8.8</code></td>
+</tr>
+<tr class="even">
+<td><code>net</code></td>
+<td>ネットワーク</td>
+<td><code>net 192.168.1.0/24</code></td>
+</tr>
+<tr class="odd">
+<td><code>src</code></td>
+<td>送信元</td>
+<td><code>src host 10.0.0.1</code></td>
+</tr>
+<tr class="even">
+<td><code>dst</code></td>
+<td>宛先</td>
+<td><code>dst net 172.16.0.0/16</code></td>
+</tr>
+<tr class="odd">
+<td><code>port</code></td>
+<td>単一ポート</td>
+<td><code>port 80</code></td>
+</tr>
+<tr class="even">
+<td><code>portrange</code></td>
+<td>ポート範囲</td>
+<td><code>portrange 1-1023</code></td>
+</tr>
+<tr class="odd">
+<td><code>tcp</code></td>
+<td>TCPパケット</td>
+<td><code>tcp</code></td>
+</tr>
+<tr class="even">
+<td><code>udp</code></td>
+<td>UDPパケット</td>
+<td><code>udp</code></td>
+</tr>
+<tr class="odd">
+<td><code>icmp</code></td>
+<td>ICMPパケット</td>
+<td><code>icmp</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="パケットフィルター22" class="slide level2">
+<h2>パケットフィルター（2/2）</h2>
+<h3 id="論理演算子">論理演算子</h3>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>演算子</th>
+<th>意味</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>and</code></td>
+<td>論理積</td>
+<td><code>tcp and port 80</code></td>
+</tr>
+<tr class="even">
+<td><code>or</code></td>
+<td>論理和</td>
+<td><code>port 80 or port 443</code></td>
+</tr>
+<tr class="odd">
+<td><code>not</code></td>
+<td>否定</td>
+<td><code>not arp</code></td>
+</tr>
+<tr class="even">
+<td><code>()</code></td>
+<td>優先順位</td>
+<td><code>(tcp and port 80) or (tcp and port 443)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="実践例">実践例</h3>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>目的</th>
+<th>フィルタ</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Web系</td>
+<td><code>port 80 or port 443</code></td>
+</tr>
+<tr class="even">
+<td>DNS</td>
+<td><code>udp port 53</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="netcat" class="title-slide slide level1 center">
+<h1>netcat</h1>
+
+</section>
+<section id="tcpipを素手で触る" class="slide level2">
+<h2>TCP/IPを「素手で」触る</h2>
+<ul>
+<li>netcat（<code>nc</code>）は、ソケットにバイト列を流すだけのツール。</li>
+</ul>
+<h3 id="クライアントモード">クライアントモード</h3>
+<ul>
+<li>阿部寛のホームページにTCP/IP接続する</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nc <span class="at">-4</span> <span class="at">-v</span> <span class="at">-w</span> 3 abehiroshi.la.coocan.jp 80</span>
+<span id="cb3-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">Connection</span> to abehiroshi.la.coocan.jp <span class="er">(</span><span class="ex">222.158.205.72</span><span class="kw">)</span> <span class="ex">80</span> port <span class="pp">[</span><span class="ss">tcp/http</span><span class="pp">]</span> succeeded!</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li><code>-4</code>: IPv4で接続、<code>-v</code>: 詳細表示、<code>-w 3</code>: 3秒待って終了</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:00.000000</span> IP 192.168.1.242.45498 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">S</span><span class="pp">]</span>, seq 2828344781, win 64440, options [mss 1432,sackOK,TS val 3638768202 ecr 0,nop,wscale 7], length 0</span>
+<span id="cb4-2"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:00.011334</span> IP 222.158.205.72.80 <span class="op">&gt;</span> 192.168.1.242.45498: Flags <span class="pp">[</span><span class="ss">S.</span><span class="pp">]</span>, seq 1683522370, ack 2828344782, win 14120, options [mss 1412,nop,wscale 0,sackOK,TS val 2903128759 ecr 3638768202], length 0</span>
+<span id="cb4-3"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:00.000135</span> IP 192.168.1.242.45498 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 1, win 504, options [nop,nop,TS val 3638768213 ecr 2903128759], length 0</span>
+<span id="cb4-4"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:03.003525</span> IP 192.168.1.242.45498 <span class="op">&gt;</span> 222.158.205.72.80: Flags <span class="pp">[</span><span class="ss">F.</span><span class="pp">]</span>, seq 1, ack 1, win 504, options [nop,nop,TS val 3638771217 ecr 2903128759], length 0</span>
+<span id="cb4-5"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:00.011268</span> IP 222.158.205.72.80 <span class="op">&gt;</span> 192.168.1.242.45498: Flags <span class="pp">[</span><span class="ss">.</span><span class="pp">]</span>, ack 2, win 14120, options [nop,nop,TS val 2903131774 ecr 3638771217], length 0</span>
+<span id="cb4-6"><a href="" aria-hidden="true" tabindex="-1"></a> <span class="ex">00:00:00.000001</span> IP 222.158.205.72.80 <span class="op">&gt;</span> 192.168.1.242.45498: Flags <span class="pp">[</span><span class="ss">F.</span><span class="pp">]</span>, seq 1, ack 2, win 14120, options [nop,nop,TS val 2903131774 ecr 3638771217], length 0</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="httpリクエストを自分で作る" class="slide level2">
+<h2>HTTPリクエストを自分で作る</h2>
+<ul>
+<li><code>nc</code>はTCP/IP接続して、バイト列を流せる状態にするだけ。
+<ul>
+<li>アプリのプロトコルは自分で書いてやる必要がある。</li>
+</ul></li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nc <span class="at">-4</span> abehiroshi.la.coocan.jp 80</span>
+<span id="cb5-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">GET</span> / HTTP/1.1</span>
+<span id="cb5-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">Host:</span> abehiroshi.la.coocan.jp</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">HTTP/1.1</span> 200 OK</span>
+<span id="cb6-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">Date:</span> Sun, 11 Jan 2026 12:51:26 GMT</span>
+<span id="cb6-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">Content-Type:</span> text/html</span>
+<span id="cb6-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">...以下略...</span></span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li><code>Ctrl+C</code>で<code>nc</code>を終了できる。</li>
+</ul>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">"GET / HTTP/1.1\r\nHost: abehiroshi.la.coocan.jp\r\n\r\n"</span> <span class="kw">|</span> <span class="ex">nc</span> <span class="at">-4</span> abehiroshi.la.coocan.jp 80</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="netcatでポートスキャンする" class="slide level2">
+<h2>netcatでポートスキャンする</h2>
+<ul>
+<li><code>nc</code>の<code>-z</code>オプションを利用すると、簡易的なポートスキャンができる。
+<ul>
+<li>ICMPが廃棄される企業ネットワークでも利用可能。</li>
+<li>nmapと異なり、デフォルトでインストールされている。</li>
+</ul></li>
+</ul>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nc <span class="at">-4</span> <span class="at">-v</span> <span class="at">-z</span> <span class="at">-w</span> 1 abehiroshi.la.coocan.jp 80</span>
+<span id="cb8-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">Connection</span> to abehiroshi.la.coocan.jp <span class="er">(</span><span class="ex">222.158.205.72</span><span class="kw">)</span> <span class="ex">80</span> port <span class="pp">[</span><span class="ss">tcp/http</span><span class="pp">]</span> succeeded!</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>192.168.0.1から.254までを80番でポートスキャン</li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> seq 1 254 <span class="kw">|</span> <span class="fu">xargs</span> <span class="at">-I{}</span> nc <span class="at">-4</span> <span class="at">-v</span> <span class="at">-z</span> <span class="at">-w</span> 1 192.168.0.{} 80</span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="netcatを簡易サーバーとして使う" class="slide level2">
+<h2>netcatを簡易サーバーとして使う</h2>
+<ul>
+<li><code>nc</code>の<code>-l</code>（Listen）オプションで、サーバーとして動作する。
+<ul>
+<li><code>-p 12345</code>のように待ち受けポートを指定（<code>1024</code>以下は要root）。</li>
+</ul></li>
+<li>疎通確認準備をサーバー側で行うときに使える。</li>
+<li>データ転送にも使える。</li>
+</ul>
+<h3 id="add-margintop">なんでもOKを返すウェブサーバー</h3>
+<ul>
+<li><code>curl http://localhost:8080/</code>に応答する。</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="fu">true</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb10-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">'HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 3\r\nConnection: close\r\n\r\nOK\n'</span> <span class="dt">\</span></span>
+<span id="cb10-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="ex">nc</span> <span class="at">-l</span> <span class="at">-p</span> 8080</span>
+<span id="cb10-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code><button title="コピー" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="index_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="index_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="index_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="index_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="index_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="index_files/libs/revealjs/plugin/reveal-quarto-revealjs-budoux/quarto-revealjs-budoux.js"></script>
+  <script src="index_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="index_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="index_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="index_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="index_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, RevealQuartoRevealjsBudoux, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "コピーしました");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "コピーしました");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+            const codeEl = trigger.previousElementSibling.cloneNode(true);
+            for (const childEl of codeEl.children) {
+              if (isCodeAnnotation(childEl)) {
+                childEl.remove();
+              }
+            }
+            return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
